@@ -1,0 +1,10 @@
+SpeechRecognition
+pyaudio
+pyttsx3
+groq
+chromadb
+onnxruntime
+openwakeword>=0.6.0
+edge-tts
+pygame
+pyautogui

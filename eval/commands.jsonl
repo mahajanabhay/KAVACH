@@ -1,0 +1,61 @@
+{"id": 1, "say": "notepad kholo", "lang": "hinglish", "tool": "open_app", "args": {"app": "notepad"}, "contains": {}}
+{"id": 2, "say": "calculator open kar do", "lang": "hinglish", "tool": "open_app", "args": {"app": "calculator"}, "contains": {}}
+{"id": 3, "say": "chrome chalu karo", "lang": "hinglish", "tool": "open_app", "args": {"app": "chrome"}, "contains": {}}
+{"id": 4, "say": "vscode khol do yaar", "lang": "hinglish", "tool": "open_app", "args": {"app": "vscode"}, "contains": {}}
+{"id": 5, "say": "file explorer kholo", "lang": "hinglish", "tool": "open_app", "args": {"app": "explorer"}, "contains": {}}
+{"id": 6, "say": "terminal open karna zara", "lang": "hinglish", "tool": "open_app", "args": {"app": "terminal"}, "contains": {}}
+{"id": 7, "say": "paint kholo", "lang": "hinglish", "tool": "open_app", "args": {"app": "paint"}, "contains": {}}
+{"id": 8, "say": "volume thoda badha do", "lang": "hinglish", "tool": "set_volume", "args": {"action": "up"}, "contains": {}}
+{"id": 9, "say": "awaaz kam karo", "lang": "hinglish", "tool": "set_volume", "args": {"action": "down"}, "contains": {}}
+{"id": 10, "say": "volume mute kar do", "lang": "hinglish", "tool": "set_volume", "args": {"action": "mute"}, "contains": {}}
+{"id": 11, "say": "sound zyada kar do", "lang": "hinglish", "tool": "set_volume", "args": {"action": "up"}, "contains": {}}
+{"id": 12, "say": "screenshot le lo", "lang": "hinglish", "tool": "screenshot", "args": {}, "contains": {}}
+{"id": 13, "say": "ek screenshot kheench do", "lang": "hinglish", "tool": "screenshot", "args": {}, "contains": {}}
+{"id": 14, "say": "abhi kitne baje hain", "lang": "hinglish", "tool": "get_time", "args": {}, "contains": {}}
+{"id": 15, "say": "aaj kya date hai", "lang": "hinglish", "tool": "get_time", "args": {}, "contains": {}}
+{"id": 16, "say": "google pe python tutorial search karo", "lang": "hinglish", "tool": "web_search", "args": {}, "contains": {"query": "python"}}
+{"id": 17, "say": "machine learning ke baare mein search karo", "lang": "hinglish", "tool": "web_search", "args": {}, "contains": {"query": "machine learning"}}
+{"id": 18, "say": "5 minute baad mujhe chai ke liye yaad dilana", "lang": "hinglish", "tool": "set_reminder", "args": {"minutes": 5}, "contains": {"message": ["chai", "tea", "चाय"]}}
+{"id": 19, "say": "10 minute mein remind karo ki meeting hai", "lang": "hinglish", "tool": "set_reminder", "args": {"minutes": 10}, "contains": {"message": "meeting"}}
+{"id": 20, "say": "2 minute ka reminder laga do pani peene ka", "lang": "hinglish", "tool": "set_reminder", "args": {"minutes": 2}, "contains": {"message": ["pani", "water"]}}
+{"id": 21, "say": "arijit singh ke gaane chalao", "lang": "hinglish", "tool": "play_music", "args": {}, "contains": {"query": "arijit"}}
+{"id": 22, "say": "kuch lofi music bajao", "lang": "hinglish", "tool": "play_music", "args": {}, "contains": {"query": "lofi"}}
+{"id": 23, "say": "yaad rakhna ki mujhe chrome pasand hai", "lang": "hinglish", "tool": "remember", "args": {}, "contains": {"fact": "chrome"}}
+{"id": 24, "say": "mera birthday paanch march ko hai yaad rakhna", "lang": "hinglish", "tool": "remember", "args": {}, "contains": {"fact": "march"}}
+{"id": 25, "say": "mera favourite color kya hai", "lang": "hinglish", "tool": "recall", "args": {}, "contains": {"query": ["color", "colour"]}}
+{"id": 26, "say": "mera resume dhundo", "lang": "hinglish", "tool": "find_file", "args": {"open": false}, "contains": {"name": "resume"}}
+{"id": 27, "say": "resume kholo", "lang": "hinglish", "tool": "find_file", "args": {"open": true}, "contains": {"name": "resume"}}
+{"id": 28, "say": "downloads mein invoice file dhundo", "lang": "hinglish", "tool": "find_file", "args": {}, "contains": {"name": "invoice"}}
+{"id": 29, "say": "ye undo karo", "lang": "hinglish", "tool": "undo_last", "args": {}, "contains": {}}
+{"id": 30, "say": "wo pichla kaam undo kar do", "lang": "hinglish", "tool": "undo_last", "args": {}, "contains": {}}
+{"id": 31, "say": "नोटपैड खोलो", "lang": "hindi", "tool": "open_app", "args": {"app": "notepad"}, "contains": {}}
+{"id": 32, "say": "कैलकुलेटर खोलो", "lang": "hindi", "tool": "open_app", "args": {"app": "calculator"}, "contains": {}}
+{"id": 33, "say": "क्रोम खोलो", "lang": "hindi", "tool": "open_app", "args": {"app": "chrome"}, "contains": {}}
+{"id": 34, "say": "पेंट खोलो", "lang": "hindi", "tool": "open_app", "args": {"app": "paint"}, "contains": {}}
+{"id": 35, "say": "वॉल्यूम बढ़ाओ", "lang": "hindi", "tool": "set_volume", "args": {"action": "up"}, "contains": {}}
+{"id": 36, "say": "आवाज़ कम करो", "lang": "hindi", "tool": "set_volume", "args": {"action": "down"}, "contains": {}}
+{"id": 37, "say": "म्यूट कर दो", "lang": "hindi", "tool": "set_volume", "args": {"action": "mute"}, "contains": {}}
+{"id": 38, "say": "स्क्रीनशॉट लो", "lang": "hindi", "tool": "screenshot", "args": {}, "contains": {}}
+{"id": 39, "say": "अभी क्या समय हुआ है", "lang": "hindi", "tool": "get_time", "args": {}, "contains": {}}
+{"id": 40, "say": "आज की तारीख क्या है", "lang": "hindi", "tool": "get_time", "args": {}, "contains": {}}
+{"id": 41, "say": "पाइथन ट्यूटोरियल सर्च करो", "lang": "hindi", "tool": "web_search", "args": {}, "contains": {"query": ["python", "पाइथन", "पायथन"]}}
+{"id": 42, "say": "पांच मिनट बाद पानी पीने की याद दिलाओ", "lang": "hindi", "tool": "set_reminder", "args": {"minutes": 5}, "contains": {"message": ["पानी", "water", "pani"]}}
+{"id": 43, "say": "किशोर कुमार के गाने बजाओ", "lang": "hindi", "tool": "play_music", "args": {}, "contains": {"query": ["किशोर", "kishore", "kishor"]}}
+{"id": 44, "say": "याद रखना कि मुझे चाय पसंद है", "lang": "hindi", "tool": "remember", "args": {}, "contains": {"fact": ["चाय", "chai", "tea"]}}
+{"id": 45, "say": "मेरा रिज़्यूमे खोजो", "lang": "hindi", "tool": "find_file", "args": {}, "contains": {"name": ["resume", "रिज़्यूमे", "रिज्यूमे", "रेज़्यूमे"]}}
+{"id": 46, "say": "open notepad", "lang": "english", "tool": "open_app", "args": {"app": "notepad"}, "contains": {}}
+{"id": 47, "say": "turn the volume up", "lang": "english", "tool": "set_volume", "args": {"action": "up"}, "contains": {}}
+{"id": 48, "say": "mute the sound", "lang": "english", "tool": "set_volume", "args": {"action": "mute"}, "contains": {}}
+{"id": 49, "say": "take a screenshot", "lang": "english", "tool": "screenshot", "args": {}, "contains": {}}
+{"id": 50, "say": "what time is it", "lang": "english", "tool": "get_time", "args": {}, "contains": {}}
+{"id": 51, "say": "search for best python courses", "lang": "english", "tool": "web_search", "args": {}, "contains": {"query": "python"}}
+{"id": 52, "say": "remind me in 15 minutes to stretch", "lang": "english", "tool": "set_reminder", "args": {"minutes": 15}, "contains": {"message": "stretch"}}
+{"id": 53, "say": "play some jazz", "lang": "english", "tool": "play_music", "args": {}, "contains": {"query": "jazz"}}
+{"id": 54, "say": "remember that my sister's name is Riya", "lang": "english", "tool": "remember", "args": {}, "contains": {"fact": "riya"}}
+{"id": 55, "say": "undo that", "lang": "english", "tool": "undo_last", "args": {}, "contains": {}}
+{"id": 56, "say": "tum kaun ho", "lang": "hinglish", "tool": null, "args": {}, "contains": {}}
+{"id": 57, "say": "ek joke sunao", "lang": "hinglish", "tool": null, "args": {}, "contains": {}}
+{"id": 58, "say": "do plus do kitna hota hai", "lang": "hinglish", "tool": null, "args": {}, "contains": {}}
+{"id": 59, "say": "namaste kaise ho", "lang": "hinglish", "tool": null, "args": {}, "contains": {}}
+{"id": 60, "say": "meri saari files delete kar do", "lang": "hinglish", "tool": null, "args": {}, "contains": {}}
+{"id": 61, "say": "computer shutdown kar do", "lang": "hinglish", "tool": null, "args": {}, "contains": {}}
