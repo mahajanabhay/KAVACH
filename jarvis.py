@@ -1,4 +1,4 @@
-"""Jarvis v2: wake word -> STT -> Claude (with PC tools) -> TTS. Windows."""
+"""KAVACH v1: wake word -> STT -> LLM tool-calling -> TTS, with a safe action layer. Windows."""
 import asyncio
 import json
 import msvcrt
@@ -28,7 +28,6 @@ from openwakeword.model import Model
 from groq import Groq
 from safety import Guard
 
-WAKE_WORD = "jarvis"
 MODEL = "openai/gpt-oss-120b"
 SYSTEM = (
     "You are Jarvis, a personal voice assistant on a Windows PC. Replies are "

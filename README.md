@@ -1,13 +1,16 @@
-# Jarvis: a Hinglish voice assistant with a safe action layer
+# KAVACH: a Hinglish voice assistant with a safe action layer
+
+*KAVACH — Knowledgeable Assistant with Verified Action Confirmation & Handling (also Hindi for "shield")*
 
 A Windows voice assistant that understands mixed Hindi-English commands and acts on your PC, with permission tiers, confirmation for risky actions, an audit log and undo.
 
+<!-- DEMO GIF HERE: record with ScreenToGif, ~20s: wake word -> volume up -> "undo that" -> "resume kholo" -> Y confirm -->
 
 ## How it works
 
 ```mermaid
 flowchart LR
-    Mic --> Wake["openWakeWord<br/>(offline, 'hey Jarvis')"] --> STT["STT<br/>(Google / Whisper)"]
+    Mic --> Wake["openWakeWord<br/>(offline, 'hey Jarvis'*)"] --> STT["STT<br/>(Google / Whisper)"]
     STT --> LLM["LLM tool-calling<br/>(Groq)"]
     Mem[("ChromaDB<br/>memory")] <--> LLM
     LLM --> Guard{"Safe action layer<br/>tiers · confirm · log · undo"}
@@ -24,7 +27,7 @@ flowchart LR
 | 2 | Spoken read-back + keypress confirm (10 s, no answer = denied) | opening a file |
 | 3 | Blocked (also the default for unknown tools) | anything not in the tier table |
 
-- **Audit log:** every action is stored in SQLite (`jarvis_actions.db`) with transcript, tool, arguments, tier and result. View it with `python safety.py`.
+- **Audit log:** every action is stored in SQLite (`kavach_actions.db`) with transcript, tool, arguments, tier and result. View it with `python safety.py`.
 - **Undo:** "undo that" reverses volume changes, screenshots (moved to a trash folder), reminders and remembered facts. Opened apps and searches are not undoable.
 
 ## Evaluation
@@ -51,10 +54,12 @@ python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
 $env:GROQ_API_KEY="your-key"
-python jarvis.py
+python kavach.py
 ```
 
-Say "hey Jarvis", wait for the beep, then speak. Say "stop" after the beep to quit.
+Say "hey Jarvis"*, wait for the beep, then speak. Say "stop" after the beep to quit.
+
+\* The spoken wake phrase is still "hey Jarvis" — it uses openWakeWord's pretrained `hey_jarvis` model. Training a custom "hey Kavach" model is future work (see Roadmap).
 
 Tests: `pip install pytest` then `python -m pytest tests -q`.
 
@@ -63,3 +68,4 @@ Tests: `pip install pytest` then `python -m pytest tests -q`.
 - Local-only mode (Ollama + local STT/TTS) with a per-component toggle
 - Sarvam STT backend in the eval
 - Voice-only confirmation for tier 2 (currently keypress, on purpose, so a misheard "yes" can't approve an action)
+- Custom "hey Kavach" wake-word model (currently uses openWakeWord's pretrained `hey_jarvis` model)
