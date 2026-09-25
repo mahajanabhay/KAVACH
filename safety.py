@@ -7,7 +7,10 @@ Tier 3: blocked. Unknown tools default to this tier.
 """
 import json
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
+
+TRUST_THRESHOLD = 5   # consecutive confirms (0 denials) needed to auto-promote an action
+TRUST_TTL_DAYS = 30   # how long a promotion lasts before it decays back to needing confirmation
 
 TIERS = {
     "get_time": 0,
@@ -22,6 +25,12 @@ TIERS = {
     "find_file": 0,
     "undo_last": 1,
 }
+
+
+def trust_key(name, args):
+    """Identify a specific action instance (e.g. one file, one app) so trust never generalizes across different targets."""
+    ident = args.get("name") or args.get("app") or args.get("query") or json.dumps(args, sort_keys=True)
+    return f"{name}:{ident}"
 
 
 def tier_of(name, args):
@@ -41,9 +50,47 @@ class Guard:
         self.stack = []  # (action_id, undo_fn)
         self.db = sqlite3.connect(db_path, check_same_thread=False)
         self.db.execute(
+            "CREATE TABLE IF NOT EXISTS trust (key TEXT PRIMARY KEY,"
+            " streak INTEGER, promoted_until TEXT)"
+        )
+        self.db.execute(
             "CREATE TABLE IF NOT EXISTS actions (id INTEGER PRIMARY KEY AUTOINCREMENT,"
             " ts TEXT, transcript TEXT, tool TEXT, args TEXT, tier INTEGER,"
             " status TEXT, result TEXT)"
+        )
+        self.db.commit()
+
+    def _trust_get(self, key):
+        """Return current streak; reset (decay) an expired promotion back to 0."""
+        row = self.db.execute("SELECT streak, promoted_until FROM trust WHERE key=?", (key,)).fetchone()
+        if not row:
+            return 0, False
+        streak, promoted_until = row
+        if promoted_until and promoted_until > datetime.now().isoformat(timespec="seconds"):
+            return streak, True
+        if promoted_until:  # promotion window passed -> decay back to untrusted
+            self.db.execute("UPDATE trust SET streak=0, promoted_until=NULL WHERE key=?", (key,))
+            self.db.commit()
+            return 0, False
+        return streak, False
+
+    def _trust_bump(self, key, confirmed):
+        if not confirmed:
+            self.db.execute(
+                "INSERT INTO trust (key, streak, promoted_until) VALUES (?, 0, NULL)"
+                " ON CONFLICT(key) DO UPDATE SET streak=0, promoted_until=NULL", (key,),
+            )
+            self.db.commit()
+            return
+        streak, _ = self._trust_get(key)
+        streak += 1
+        promoted_until = None
+        if streak >= TRUST_THRESHOLD:
+            promoted_until = (datetime.now() + timedelta(days=TRUST_TTL_DAYS)).isoformat(timespec="seconds")
+        self.db.execute(
+            "INSERT INTO trust (key, streak, promoted_until) VALUES (?, ?, ?)"
+            " ON CONFLICT(key) DO UPDATE SET streak=excluded.streak, promoted_until=excluded.promoted_until",
+            (key, streak, promoted_until),
         )
         self.db.commit()
 
@@ -61,6 +108,7 @@ class Guard:
         if name == "undo_last":
             return self.undo()
         tier = tier_of(name, args)
+        via_trust = False
         if tier >= 3:
             self._log(name, args, tier, "blocked", "")
             return "Blocked: that action is not allowed."
@@ -70,11 +118,18 @@ class Guard:
             if desc is None:
                 self._log(name, args, tier, "skipped", "nothing to do")
                 return "No matching files."
-            if not self.confirm(desc):
+            key = trust_key(name, args)
+            _, trusted = self._trust_get(key)
+            if trusted:
+                via_trust = True
+            elif not self.confirm(desc):
+                self._trust_bump(key, confirmed=False)
                 self._log(name, args, tier, "denied", desc)
                 return "Cancelled: not confirmed."
+            else:
+                self._trust_bump(key, confirmed=True)
         result = self.run_tool(name, args)
-        status = "error" if str(result).startswith("Error") else "done"
+        status = "error" if str(result).startswith("Error") else ("auto_trusted" if via_trust else "done")
         aid = self._log(name, args, tier, status, result)
         maker = self.undo_makers.get(name)
         if maker and status == "done":

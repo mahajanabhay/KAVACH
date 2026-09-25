@@ -76,6 +76,57 @@ def test_undo(tmp_path):
     assert g.call("undo_last", {}) == "Nothing to undo."
 
 
+def test_trust_promotes_after_threshold_confirms(tmp_path):
+    g, calls = make_guard(tmp_path, confirm=lambda d: True)
+    for _ in range(5):
+        g.call("find_file", {"name": "a", "open": True})
+    assert len(calls) == 5
+    statuses = [r[2] for r in rows(g)]
+    assert statuses[:4] == ["done"] * 4
+    assert statuses[4] == "done"
+
+    # 6th call: should now be auto-trusted, no confirm needed
+    def no_confirm(d):
+        raise AssertionError("should not ask once trusted")
+    g.confirm = no_confirm
+    out = g.call("find_file", {"name": "a", "open": True})
+    assert out == "ok"
+    assert rows(g)[-1] == ("find_file", 2, "auto_trusted")
+
+
+def test_trust_is_scoped_per_target(tmp_path):
+    g, calls = make_guard(tmp_path, confirm=lambda d: True)
+    for _ in range(5):
+        g.call("find_file", {"name": "a", "open": True})
+
+    def deny_confirm(d):
+        return False
+    g.confirm = deny_confirm
+    out = g.call("find_file", {"name": "b", "open": True})  # different target, never confirmed
+    assert out.startswith("Cancelled")
+
+
+def test_denial_resets_trust_streak(tmp_path):
+    answers = iter([True, True, True, False, True])
+    g, calls = make_guard(tmp_path, confirm=lambda d: next(answers))
+    for _ in range(5):
+        g.call("find_file", {"name": "a", "open": True})
+
+    def no_confirm(d):
+        return False
+    g.confirm = no_confirm
+    out = g.call("find_file", {"name": "a", "open": True})  # streak was reset by the denial, needs confirm again
+    assert out.startswith("Cancelled")
+
+
+def test_trust_never_applies_to_tier3(tmp_path):
+    g, calls = make_guard(tmp_path)
+    for _ in range(10):
+        g.call("delete_everything", {})
+    assert calls == []
+    assert all(r[2] == "blocked" for r in rows(g))
+
+
 def test_error_not_undoable_and_logged(tmp_path):
     g, _ = make_guard(tmp_path, undo_makers={"open_app": lambda a, r: (lambda: None)})
     g.call("open_app", {"app": "notepad", "bad": True})
