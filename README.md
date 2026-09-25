@@ -39,13 +39,16 @@ Metric: task success, meaning the right tool and the right arguments, on 61 comm
 | LLM intent only (typed text) | 95.1% (58/61) |
 | Google STT (hi-IN) + LLM | 93.4% (57/61) |
 | Google STT (en-IN) + LLM | 95.1% (58/61) |
+| Sarvam STT (saaras:v3, codemix mode) + LLM | 95.1% (58/61) |
 | Whisper (local, small, auto language detect) + LLM | 75.4% (46/61) |
 
-Reproduce: `python eval_hinglish.py text`, then `record`, then `audio --stt google-hi` (or `--stt whisper`).
+Reproduce: `python eval_hinglish.py text`, then `record`, then `audio --stt google-hi` (or `--stt sarvam`, `--stt whisper`).
 
-Local Whisper trails cloud STT specifically on romanized Hinglish (64% vs. 94-97%) — the small model's language detector guesses inconsistently on short, code-switched, romanized audio (sometimes even picking Urdu or Norwegian script for the same phrase). This is a known hard case for general-purpose ASR; a larger Whisper model or a Hinglish-specific model (e.g. Sarvam, AI4Bharat) would likely close the gap, at the cost of no longer being fully local. Cloud STT remains the accuracy-first default; Whisper is the offline/local-first option, with this trade-off documented rather than hidden.
+Sarvam's `codemix` mode, purpose-built for Hinglish, matches Google's best cloud result. Across all three cloud engines, the same two failure modes recur: one STT mishearing ("paint" -> "पेट") and a couple of trailing words/names getting cut off on longer sentences. These are documented, consistent limitations of the current recording/STT setup rather than a per-engine weakness.
 
-Remaining failures are mostly recording cut-offs on trailing words/names and STT mishearing (e.g. "paint" → "पेट"); see `eval/results_*.json` for details.
+Local Whisper trails cloud STT specifically on romanized Hinglish (64% vs. 89-97%) - the small model's language detector guesses inconsistently on short, code-switched, romanized audio (sometimes even picking Urdu or Norwegian script for the same phrase). This is a known hard case for general-purpose ASR; a larger Whisper model would likely close some of the gap, at the cost of no longer being fully local. Cloud STT (Google or Sarvam) remains the accuracy-first default; Whisper is the offline/local-first option, with this trade-off documented rather than hidden.
+
+Remaining failures are mostly recording cut-offs on trailing words/names and STT mishearing (e.g. "paint" -> "पेट"); see `eval/results_*.json` for details.
 
 Limitations: the command set was written by one person and is cleaner than real speech; single speaker; one accent.
 

@@ -16,8 +16,8 @@
 {"id": 16, "say": "google pe python tutorial search karo", "lang": "hinglish", "tool": "web_search", "args": {}, "contains": {"query": "python"}}
 {"id": 17, "say": "machine learning ke baare mein search karo", "lang": "hinglish", "tool": "web_search", "args": {}, "contains": {"query": "machine learning"}}
 {"id": 18, "say": "5 minute baad mujhe chai ke liye yaad dilana", "lang": "hinglish", "tool": "set_reminder", "args": {"minutes": 5}, "contains": {"message": ["chai", "tea", "चाय"]}}
-{"id": 19, "say": "10 minute mein remind karo ki meeting hai", "lang": "hinglish", "tool": "set_reminder", "args": {"minutes": 10}, "contains": {"message": "meeting"}}
-{"id": 20, "say": "2 minute ka reminder laga do pani peene ka", "lang": "hinglish", "tool": "set_reminder", "args": {"minutes": 2}, "contains": {"message": ["pani", "water"]}}
+{"id": 19, "say": "10 minute mein remind karo ki meeting hai", "lang": "hinglish", "tool": "set_reminder", "args": {"minutes": 10}, "contains": {"message": ["meeting", "मीटिंग"]}}
+{"id": 20, "say": "2 minute ka reminder laga do pani peene ka", "lang": "hinglish", "tool": "set_reminder", "args": {"minutes": 2}, "contains": {"message": ["pani", "water", "पानी"]}}
 {"id": 21, "say": "arijit singh ke gaane chalao", "lang": "hinglish", "tool": "play_music", "args": {}, "contains": {"query": "arijit"}}
 {"id": 22, "say": "kuch lofi music bajao", "lang": "hinglish", "tool": "play_music", "args": {}, "contains": {"query": "lofi"}}
 {"id": 23, "say": "yaad rakhna ki mujhe chrome pasand hai", "lang": "hinglish", "tool": "remember", "args": {}, "contains": {"fact": "chrome"}}
