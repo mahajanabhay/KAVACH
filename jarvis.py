@@ -197,7 +197,7 @@ def list_drives():
     return [Path(f"{letter}:\\") for letter in string.ascii_uppercase if os.path.exists(f"{letter}:\\")]
 
 
-def find_file(name, open_it=False, limit=5, max_seconds=8):
+def find_file(name, open_it=False, limit=12, max_seconds=8):
     """Search every fixed drive for a matching filename, skipping system/dependency
     folders. Time-capped so a large drive can't hang the assistant; results are
     sorted most-recently-modified first as a proxy for relevance."""
@@ -216,12 +216,16 @@ def find_file(name, open_it=False, limit=5, max_seconds=8):
         found.sort(key=os.path.getmtime, reverse=True)
     except OSError:
         pass
+    total = len(found)
     found = found[:limit]
     if not found:
         return "No matching files."
     if open_it:
         os.startfile(found[0])
-    return "\n".join(found)
+    result = "\n".join(found)
+    if total > limit:
+        result += f"\n(+{total - limit} more matches not shown - ask to narrow the search if needed)"
+    return result
 
 
 def search_memory(query, n=3):
@@ -281,10 +285,11 @@ TRASH = Path.home() / ".jarvis_trash"
 
 
 def confirm(desc, timeout=10):
+    speak_text, print_text = desc if isinstance(desc, tuple) else (desc, desc)
     while msvcrt.kbhit():
         msvcrt.getwch()  # flush stray keys
-    speak(f"{desc} Press Y in the terminal to confirm.")
-    print(f"[CONFIRM] {desc} (press y within {timeout}s)")
+    speak(f"{speak_text} Press Y in the terminal to confirm.")
+    print(f"[CONFIRM] {print_text} (press y within {timeout}s)")
     end = time.time() + timeout
     while time.time() < end:
         if msvcrt.kbhit():
@@ -293,12 +298,18 @@ def confirm(desc, timeout=10):
     return False  # no answer = denied
 
 
+def _friendly_name(path):
+    return Path(path).stem.replace("_", " ").replace("-", " ")
+
+
 def _describe_find(args):
     hits = find_file(args["name"], False)
     if hits.startswith("No matching"):
         return None
     path = hits.splitlines()[0]
-    return f"Open {path}?", f"find_file:{path}"  # key by the resolved file, not the search phrase
+    speak_text = f"Open {_friendly_name(path)} from your {Path(path).parent.name} folder?"
+    print_text = f"Open {path}?"
+    return (speak_text, print_text), f"find_file:{path}"  # key by the resolved file, not the search phrase
 
 
 def _undo_volume(args, result):
