@@ -26,6 +26,7 @@ import pyttsx3
 import speech_recognition as sr
 from openwakeword.model import Model
 from groq import Groq
+from sarvamai import SarvamAI
 from safety import Guard
 
 MODEL = "openai/gpt-oss-120b"
@@ -142,6 +143,11 @@ TOOLS = [
 ]
 
 client = Groq()  # reads GROQ_API_KEY (free)
+try:
+    sarvam_client = SarvamAI()  # reads SARVAM_API_KEY
+except Exception as e:
+    print(f"Sarvam unavailable, will use Google STT only: {e}")
+    sarvam_client = None
 GROQ_TOOLS = [
     {"type": "function", "function": {"name": t["name"], "description": t["description"], "parameters": t["input_schema"]}}
     for t in TOOLS
@@ -357,13 +363,31 @@ def ask(text):
             history.append({"role": "tool", "tool_call_id": c.id, "content": result})
 
 
+def transcribe_sarvam(audio):
+    path = os.path.join(tempfile.gettempdir(), f"kavach_stt_{uuid.uuid4().hex}.wav")
+    with open(path, "wb") as f:
+        f.write(audio.get_wav_data(convert_rate=16000, convert_width=2))
+    try:
+        with open(path, "rb") as f:
+            r = sarvam_client.speech_to_text.transcribe(file=f, model="saaras:v3", mode="codemix")
+        return (r.transcript or "").lower()
+    finally:
+        os.remove(path)
+
+
 def listen(mic, timeout=8, limit=15):
     try:
         audio = recognizer.listen(mic, timeout=timeout, phrase_time_limit=limit)
-        return recognizer.recognize_google(audio).lower()
-    except (sr.WaitTimeoutError, sr.UnknownValueError):
+    except sr.WaitTimeoutError:
         return ""
-    except sr.RequestError as e:
+    if sarvam_client:
+        try:
+            return transcribe_sarvam(audio)
+        except Exception as e:
+            print(f"Sarvam STT error, falling back to Google: {e}")
+    try:
+        return recognizer.recognize_google(audio).lower()
+    except (sr.UnknownValueError, sr.RequestError) as e:
         print(f"STT error: {e}")
         return ""
 
