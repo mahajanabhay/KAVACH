@@ -163,14 +163,16 @@ LAST_MEMORY_ID = []
 
 
 VOICE = "en-GB-RyanNeural"
+HINDI_VOICE = "hi-IN-MadhurNeural"
 
 
 def speak(text):
     print(f"Jarvis: {text}")
+    voice = HINDI_VOICE if any("\u0900" <= ch <= "\u097f" for ch in text) else VOICE
     with speak_lock:
         try:
             path = os.path.join(tempfile.gettempdir(), f"jarvis_{uuid.uuid4().hex}.mp3")
-            asyncio.run(edge_tts.Communicate(text, VOICE).save(path))
+            asyncio.run(edge_tts.Communicate(text, voice).save(path))
             pygame.mixer.music.load(path)
             pygame.mixer.music.play()
             while pygame.mixer.music.get_busy():
@@ -222,9 +224,10 @@ def find_file(name, open_it=False, limit=12, max_seconds=8):
         return "No matching files."
     if open_it:
         os.startfile(found[0])
+        return found[0]  # opening is a committed action - report only the file that was opened
     result = "\n".join(found)
     if total > limit:
-        result += f"\n(+{total - limit} more matches not shown - ask to narrow the search if needed)"
+        result += f"\n({total - limit} additional matches exist)"
     return result
 
 
