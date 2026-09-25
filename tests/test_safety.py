@@ -127,6 +127,30 @@ def test_trust_never_applies_to_tier3(tmp_path):
     assert all(r[2] == "blocked" for r in rows(g))
 
 
+def test_describer_key_override_scopes_trust_by_resolved_target(tmp_path):
+    """Regression: two calls with the SAME args (e.g. name='resume') that resolve to
+    DIFFERENT actual files must never share a trust streak."""
+    resolved = {"resume": "path/A.pdf"}  # first 5 confirms all resolve to A.pdf
+
+    def describe(a):
+        path = resolved[a["name"]]
+        return f"Open {path}?", f"find_file:{path}"
+
+    g, calls = make_guard(tmp_path, confirm=lambda d: True, describers={"find_file": describe})
+    for _ in range(5):
+        g.call("find_file", {"name": "resume", "open": True})
+    assert len(calls) == 5
+
+    # now the SAME query resolves to a DIFFERENT file - must still require confirmation
+    resolved["resume"] = "path/B.pdf"
+
+    def deny(d):
+        return False
+    g.confirm = deny
+    out = g.call("find_file", {"name": "resume", "open": True})
+    assert out.startswith("Cancelled"), "trust must not transfer to a different resolved file"
+
+
 def test_error_not_undoable_and_logged(tmp_path):
     g, _ = make_guard(tmp_path, undo_makers={"open_app": lambda a, r: (lambda: None)})
     g.call("open_app", {"app": "notepad", "bad": True})

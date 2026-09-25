@@ -114,11 +114,12 @@ class Guard:
             return "Blocked: that action is not allowed."
         if tier == 2:
             describe = self.describers.get(name, lambda a: f"Run {name}?")
-            desc = describe(args)
-            if desc is None:
+            d = describe(args)
+            if d is None:
                 self._log(name, args, tier, "skipped", "nothing to do")
                 return "No matching files."
-            key = trust_key(name, args)
+            desc, key_override = d if isinstance(d, tuple) else (d, None)
+            key = key_override or trust_key(name, args)
             _, trusted = self._trust_get(key)
             if trusted:
                 via_trust = True

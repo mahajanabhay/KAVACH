@@ -184,17 +184,38 @@ def speak(text):
             engine.runAndWait()
 
 
-def find_file(name, open_it=False, limit=5):
+SKIP_DIRS = {"venv", ".venv", "env", "node_modules", "site-packages",
+             "__pycache__", ".git", "dist", "build", ".mypy_cache", ".pytest_cache",
+             "Windows", "Program Files", "Program Files (x86)", "$Recycle.Bin",
+             "System Volume Information", "AppData", "ProgramData", "Windows.old"}
+
+
+def list_drives():
+    if os.name != "nt":
+        return [Path("/")]
+    import string
+    return [Path(f"{letter}:\\") for letter in string.ascii_uppercase if os.path.exists(f"{letter}:\\")]
+
+
+def find_file(name, open_it=False, limit=5, max_seconds=8):
+    """Search every fixed drive for a matching filename, skipping system/dependency
+    folders. Time-capped so a large drive can't hang the assistant; results are
+    sorted most-recently-modified first as a proxy for relevance."""
     name = name.lower()
+    start = time.time()
     found = []
-    for folder in ("Desktop", "Documents", "Downloads"):
-        for root, dirs, files in os.walk(Path.home() / folder):
-            dirs[:] = [d for d in dirs if not d.startswith(".")]
-            found += [os.path.join(root, f) for f in files if name in f.lower()]
-            if len(found) >= limit:
+    for root_dir in list_drives():
+        for root, dirs, files in os.walk(root_dir, topdown=True):
+            if time.time() - start > max_seconds:
                 break
-        if len(found) >= limit:
+            dirs[:] = [d for d in dirs if not d.startswith(".") and d not in SKIP_DIRS]
+            found += [os.path.join(root, f) for f in files if name in f.lower()]
+        if time.time() - start > max_seconds:
             break
+    try:
+        found.sort(key=os.path.getmtime, reverse=True)
+    except OSError:
+        pass
     found = found[:limit]
     if not found:
         return "No matching files."
@@ -274,7 +295,10 @@ def confirm(desc, timeout=10):
 
 def _describe_find(args):
     hits = find_file(args["name"], False)
-    return None if hits.startswith("No matching") else "Open " + hits.splitlines()[0] + "?"
+    if hits.startswith("No matching"):
+        return None
+    path = hits.splitlines()[0]
+    return f"Open {path}?", f"find_file:{path}"  # key by the resolved file, not the search phrase
 
 
 def _undo_volume(args, result):
