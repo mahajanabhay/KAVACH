@@ -33,7 +33,12 @@ MODEL = "openai/gpt-oss-120b"
 SYSTEM = (
     "You are Jarvis, a personal voice assistant on a Windows PC. Replies are "
     "spoken aloud: keep them short (1-3 sentences), plain text, no markdown. "
-    "Use tools for actions; confirm briefly after."
+    "Use tools for actions; confirm briefly after. "
+    "CRITICAL RULE: Always reply in Roman/Latin script only - English or Hinglish "
+    "written in Latin letters (e.g. 'resume khol diya gaya hai'). NEVER write your "
+    "reply in Devanagari or any other non-Latin script, under any circumstance, "
+    "even for a short confirmation. This applies to every single reply, with no "
+    "exceptions, regardless of the tool result content."
 )
 
 APPS = {
@@ -168,8 +173,25 @@ HINDI_VOICE = "hi-IN-MadhurNeural"
 
 def speak(text):
     print(f"Jarvis: {text}")
-    voice = HINDI_VOICE if any("\u0900" <= ch <= "\u097f" for ch in text) else VOICE
     with speak_lock:
+        if sarvam_client:
+            try:
+                from sarvamai.play import save as sarvam_save
+                audio = sarvam_client.text_to_speech.convert(
+                    text=text, language_code="hi-IN", model="bulbul:v3", speaker="priya"
+                )
+                path = os.path.join(tempfile.gettempdir(), f"jarvis_{uuid.uuid4().hex}.wav")
+                sarvam_save(audio, path)
+                pygame.mixer.music.load(path)
+                pygame.mixer.music.play()
+                while pygame.mixer.music.get_busy():
+                    pygame.time.wait(50)
+                pygame.mixer.music.unload()
+                os.remove(path)
+                return
+            except Exception as e:
+                print(f"Sarvam TTS error, falling back to edge-tts: {e}")
+        voice = HINDI_VOICE if any("\u0900" <= ch <= "\u097f" for ch in text) else VOICE
         try:
             path = os.path.join(tempfile.gettempdir(), f"jarvis_{uuid.uuid4().hex}.mp3")
             asyncio.run(edge_tts.Communicate(text, voice).save(path))
