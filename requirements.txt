@@ -4,7 +4,9 @@ pyttsx3
 groq
 chromadb
 onnxruntime
+sarvamai
 openwakeword>=0.6.0
 edge-tts
 pygame
 pyautogui
+psutil

@@ -20,6 +20,7 @@ import edge_tts
 import numpy as np
 import openwakeword
 import pyaudio
+import psutil
 import pyautogui
 import pygame
 import pyttsx3
@@ -145,6 +146,21 @@ TOOLS = [
         "description": "Get the current date and time.",
         "input_schema": {"type": "object", "properties": {}},
     },
+    {
+        "name": "system_info",
+        "description": (
+            "Report the PC's current status: battery percentage, disk free space, "
+            "CPU and RAM usage percentage, and number of running processes. Use this "
+            "for ANY question about how the computer/PC is doing, its health, status, "
+            "specs, or performance right now - e.g. 'how's my PC doing', 'check system "
+            "health', 'how much battery do I have', 'is my disk full', 'system status'. "
+            "This is a real, available check - never say you're unable to check this. "
+            "When reporting the result to the user, state the ACTUAL numbers returned "
+            "(e.g. 'battery 82%, CPU 12%, RAM 45% used, 120GB disk free') - never "
+            "summarize vaguely as 'looks fine', 'normal', or 'healthy' without the figures."
+        ),
+        "input_schema": {"type": "object", "properties": {}},
+    },
 ]
 
 client = Groq()  # reads GROQ_API_KEY (free)
@@ -174,11 +190,12 @@ HINDI_VOICE = "hi-IN-MadhurNeural"
 def speak(text):
     print(f"Jarvis: {text}")
     with speak_lock:
-        if sarvam_client:
+        if sarvam_client and needs_hindi_voice(text):
             try:
                 from sarvamai.play import save as sarvam_save
+                sarvam_lang = "hi-IN" if any("\u0900" <= ch <= "\u097f" for ch in text) else "en-IN"
                 audio = sarvam_client.text_to_speech.convert(
-                    text=text, language_code="hi-IN", model="bulbul:v3", speaker="priya"
+                    text=text, language_code=sarvam_lang, model="bulbul:v3", speaker="priya"
                 )
                 path = os.path.join(tempfile.gettempdir(), f"jarvis_{uuid.uuid4().hex}.wav")
                 sarvam_save(audio, path)
@@ -219,6 +236,23 @@ def list_drives():
         return [Path("/")]
     import string
     return [Path(f"{letter}:\\") for letter in string.ascii_uppercase if os.path.exists(f"{letter}:\\")]
+
+
+def get_system_info():
+    cpu = psutil.cpu_percent(interval=0.5)
+    mem = psutil.virtual_memory()
+    disk = psutil.disk_usage(str(Path.home().anchor or "/"))
+    parts = [
+        f"CPU {cpu:.0f}% used",
+        f"RAM {mem.percent:.0f}% used ({mem.used // (1024**3)}GB of {mem.total // (1024**3)}GB)",
+        f"disk {disk.percent:.0f}% used ({disk.free // (1024**3)}GB free)",
+        f"{len(psutil.pids())} processes running",
+    ]
+    battery = psutil.sensors_battery()
+    if battery:
+        state = "charging" if battery.power_plugged else "on battery"
+        parts.insert(0, f"battery {battery.percent:.0f}% ({state})")
+    return ", ".join(parts)
 
 
 def find_file(name, open_it=False, limit=12, max_seconds=8):
@@ -301,6 +335,8 @@ def run_tool(name, args):
             return "Opened YouTube results."
         if name == "get_time":
             return datetime.now().strftime("%A, %d %B %Y, %I:%M %p")
+        if name == "system_info":
+            return get_system_info()
     except Exception as e:
         return f"Error: {e}"
     return "Unknown tool."
@@ -387,7 +423,23 @@ def trim_history(limit=20):
         history.pop(0)
 
 
+SYSTEM_INFO_PHRASES = ("system info", "system health", "how's my pc", "hows my pc",
+                        "how is my pc", "pc doing", "battery level", "how much battery",
+                        "disk space", "system status", "system ki halat", "pc ki halat")
+HINGLISH_MARKERS = ("kholo", "karo", "kya", "hai", "aap", "madad", "chahiye", "bata",
+                     "yaad", "dilana", "wala", "kar do", "nahi", "haan")
+
+
+def needs_hindi_voice(text):
+    if any("\u0900" <= ch <= "\u097f" for ch in text):
+        return True
+    lower = f" {text.lower()} "
+    return any(f" {w} " in lower for w in HINGLISH_MARKERS)
+
+
 def ask(text):
+    if any(p in text.lower() for p in SYSTEM_INFO_PHRASES):
+        text = f"{text}\n\n[Real system data - answer only what was asked using these figures: {get_system_info()}]"
     history.append({"role": "user", "content": text})
     guard.transcript = text
     trim_history()
