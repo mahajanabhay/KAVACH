@@ -35,6 +35,8 @@ SYSTEM = (
     "You are Jarvis, a personal voice assistant on a Windows PC. Replies are "
     "spoken aloud: keep them short (1-3 sentences), plain text, no markdown. "
     "Use tools for actions; confirm briefly after. "
+    "If a confirmation is denied/cancelled, just report that plainly and stop - do NOT "
+    "try an alternate action or tool as a workaround without the user explicitly asking. "
     "CRITICAL RULE: Always reply in Roman/Latin script only - English or Hinglish "
     "written in Latin letters (e.g. 'resume khol diya gaya hai'). NEVER write your "
     "reply in Devanagari or any other non-Latin script, under any circumstance, "
@@ -186,16 +188,33 @@ LAST_MEMORY_ID = []
 VOICE = "en-GB-RyanNeural"
 HINDI_VOICE = "hi-IN-MadhurNeural"
 
+HINGLISH_MARKERS = ("kholo", "karo", "kya", "hai", "hain", "nahi", "aap", "madad",
+                     "chahiye", "bata", "yaad", "dilana", "wala", "wali", "kar do",
+                     "haan", "mila", "gaya", "gayi", "diya", "mujhe", "mein", "abhi",
+                     "thoda", "zyada", "kaise", "kyun", "theek", "accha", "dekho")
+
+
+def needs_hindi_voice(text):
+    """One consolidated check: does this text contain Devanagari script, or enough
+    romanized Hindi/Hinglish words that an English-only voice would mispronounce it?"""
+    if any("\u0900" <= ch <= "\u097f" for ch in text):
+        return True
+    lower = f" {text.lower()} "
+    return any(f" {w} " in lower for w in HINGLISH_MARKERS)
+
 
 def speak(text):
+    if not text or not text.strip():
+        return
     print(f"Jarvis: {text}")
     with speak_lock:
-        if sarvam_client and needs_hindi_voice(text):
+        hindi = needs_hindi_voice(text)
+        if sarvam_client:
             try:
                 from sarvamai.play import save as sarvam_save
-                sarvam_lang = "hi-IN" if any("\u0900" <= ch <= "\u097f" for ch in text) else "en-IN"
+                lang = "hi-IN" if hindi else "en-IN"
                 audio = sarvam_client.text_to_speech.convert(
-                    text=text, language_code=sarvam_lang, model="bulbul:v3", speaker="priya"
+                    text=text, language_code=lang, model="bulbul:v3", speaker="priya"
                 )
                 path = os.path.join(tempfile.gettempdir(), f"jarvis_{uuid.uuid4().hex}.wav")
                 sarvam_save(audio, path)
@@ -208,7 +227,7 @@ def speak(text):
                 return
             except Exception as e:
                 print(f"Sarvam TTS error, falling back to edge-tts: {e}")
-        voice = HINDI_VOICE if any("\u0900" <= ch <= "\u097f" for ch in text) else VOICE
+        voice = HINDI_VOICE if hindi else VOICE
         try:
             path = os.path.join(tempfile.gettempdir(), f"jarvis_{uuid.uuid4().hex}.mp3")
             asyncio.run(edge_tts.Communicate(text, voice).save(path))
@@ -426,20 +445,15 @@ def trim_history(limit=20):
 SYSTEM_INFO_PHRASES = ("system info", "system health", "how's my pc", "hows my pc",
                         "how is my pc", "pc doing", "battery level", "how much battery",
                         "disk space", "system status", "system ki halat", "pc ki halat")
-HINGLISH_MARKERS = ("kholo", "karo", "kya", "hai", "aap", "madad", "chahiye", "bata",
-                     "yaad", "dilana", "wala", "kar do", "nahi", "haan")
-
-
-def needs_hindi_voice(text):
-    if any("\u0900" <= ch <= "\u097f" for ch in text):
-        return True
-    lower = f" {text.lower()} "
-    return any(f" {w} " in lower for w in HINGLISH_MARKERS)
 
 
 def ask(text):
     if any(p in text.lower() for p in SYSTEM_INFO_PHRASES):
-        text = f"{text}\n\n[Real system data - answer only what was asked using these figures: {get_system_info()}]"
+        text = (
+            f"{text}\n\n[Real system data: {get_system_info()}. Answer using ONLY the "
+            "specific metric(s) the user asked about - e.g. if they only asked about "
+            "battery, mention ONLY battery, not CPU/RAM/disk/processes too.]"
+        )
     history.append({"role": "user", "content": text})
     guard.transcript = text
     trim_history()
@@ -449,6 +463,7 @@ def ask(text):
         resp = client.chat.completions.create(
             model=MODEL,
             max_tokens=400,
+            reasoning_format="hidden",  # gpt-oss-120b is a reasoning model; without this, its internal reasoning leaks into the spoken reply
             tools=GROQ_TOOLS,
             messages=[{"role": "system", "content": system}] + history,
         )
